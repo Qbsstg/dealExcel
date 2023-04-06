@@ -3,7 +3,7 @@ from scipy import integrate
 import pylab
 
 # 读取桌面的csv文件
-filename = 'C:\\Users\\Qbss\\Desktop\\test.csv'
+filename = 'test.csv'
 
 fn = open(filename, 'r', encoding='utf-8')
 
