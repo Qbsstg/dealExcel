@@ -1,4 +1,6 @@
 import math
+import time
+import warnings
 
 import numpy
 import pandas
@@ -7,13 +9,14 @@ from scipy import integrate
 
 # 定义一个带返回值的方法(双返回值)
 def fun_charge(loadtxt):
+    # 消纳比例
+    c_ration = float(loadtxt[0][1])
+
     # 最大需求量
-    max_demand = loadtxt[0][1]
+    max_demand = loadtxt[1][1]
 
     # 变压器最大容量
-    max_capacity = loadtxt[1][1]
-
-    nan = loadtxt[0][3]
+    max_capacity = loadtxt[2][1]
 
     # 取最大需求量和变压器最大容量中最大值
     max_value = max(max_demand, max_capacity)
@@ -23,7 +26,7 @@ def fun_charge(loadtxt):
         raise Exception('max_value is NaN')
 
     # 取loadtxt的第四行到最后一行
-    loadtxt_ = loadtxt[3:]
+    loadtxt_ = loadtxt[4:]
 
     # 用一个树字典存储loadtxt_的值
     group = {}
@@ -71,7 +74,7 @@ def fun_charge(loadtxt):
         group_1 = numpy.vstack((group_1, numpy.array((group_[1][1], group_[1][1] + group_[1][3]))))
         group_1 = numpy.vstack((group_1, numpy.array((group__[1][1], group__[1][1] + group__[1][3]))))
 
-    return group_1, max_value
+    return group_1, max_value, c_ration
 
 
 def fun_y(loadtxt):
@@ -84,10 +87,19 @@ def fun_y(loadtxt):
     loadtxt_ = loadtxt[0:, 1:]
     loadtxt__ = loadtxt_[1::4]
 
-    # 将二维数组转换为一维数组
-    loadtxt___ = list(map(float, loadtxt__.flatten()))
-    x = numpy.arange(0, 96, 1)
+    # 定义一个一维数组
+    loadtxt___ = numpy.array([])
 
+    # 循环loadtxt__的每一行
+    for i in range(len(loadtxt__)):
+        for j in range(len(loadtxt__[i])):
+            if math.isnan(loadtxt__[i][j]):
+                continue
+            loadtxt___ = numpy.append(loadtxt___, loadtxt__[i][j])
+
+    x = numpy.arange(0, len(loadtxt___), 1)
+
+    warnings.simplefilter('ignore', numpy.RankWarning)
     z1 = numpy.polyfit(x, loadtxt___, 20)
     p1 = numpy.poly1d(z1)
 
@@ -96,7 +108,7 @@ def fun_y(loadtxt):
 
 def fun_oneSheet(loadtxt, excel_func, value_max):
     # 定义一个数组
-    result = []
+    re = []
 
     #  循环charge_excel的每一行
     for j in range(len(excel_func)):
@@ -109,13 +121,15 @@ def fun_oneSheet(loadtxt, excel_func, value_max):
         # 通过f_excel计算积分
         v, quad = integrate.quad(loadtxt, j__, j___)
         # 将积分的值添加到result中
-        result.append(value_max * (j___ - j__) - v)
+        re.append(value_max * (j___ - j__) - v)
 
-    return result
+    return re
 
 
 # 执行函数
 if __name__ == '__main__':
+    # 开始时间
+    start = time.time()
 
     filename = 'train.xlsx'
     fn = open(filename, 'r', encoding='utf-8')
@@ -128,25 +142,55 @@ if __name__ == '__main__':
 
     # 数组的列数
     col = a_to_numpy.shape[1]
-    row_ = row / 49
-    reshape = a_to_numpy.reshape(int(row_), 49, 9)
 
-    charge_excel, maxvalue = fun_charge(excel['B'].to_numpy())
+    # 定义一个空的数组
+    reshape = numpy.array([])
 
-    # 定一个一个二维数组，用来存储fun_oneSheet的返回值
+    # 判断数据的正确性
+    if row % 49 == 0:
+        reshape = a_to_numpy.reshape(int(row / 49), 49, 9)
+    else:
+        reshape = numpy.array([a_to_numpy])
+
+    charge_excel, maxvalue, cration = fun_charge(excel['B'].to_numpy())
+
+    # 定义一个二维数组，用来存储fun_oneSheet的返回值
     result = numpy.array([])
     print('页数' + len(reshape).__str__())
+
     # 循环reshape的每一行
     for a in range(len(reshape)):
         f_excel = fun_y(reshape[a])
         # 将fun_oneSheet的返回值添加到result中
         sheet = fun_oneSheet(f_excel, charge_excel, maxvalue)
         if len(result) == 0:
-            result = numpy.array(sheet)
+            result = numpy.array([sheet])
         else:
             result = numpy.vstack((result, sheet))
 
     # 将result 的值写入到excel中
-    pandas.DataFrame(result).to_excel('result.xlsx')
+    # pandas.DataFrame(result).to_excel('data.xlsx')
 
     print(result)
+
+    # 取result每一行的最小值
+    result = numpy.min(result, axis=1)
+    # 对result进行倒序排序
+    result = numpy.sort(result)[::-1]
+
+    # 取result的长度
+    result_len = len(result)
+
+    # 按照消纳比例取result的值
+    result = result[int(result_len * cration)]
+
+    print(result)
+
+    # 将c输出到result.txt中
+    with open('result.txt', 'w') as f:
+        f.write(result.__str__())
+        f.close()
+
+    # 结束时间
+    end = time.time()
+    print('耗时：' + (end - start).__str__())

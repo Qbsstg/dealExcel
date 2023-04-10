@@ -28,4 +28,4 @@ reshape = loadtxt.reshape(int(row_), 49, 9)
 #     print(i__)  # 打印每页的数据
 
 
-print(reshape[0])
+print(reshape[4])
