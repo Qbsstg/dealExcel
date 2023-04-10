@@ -38,6 +38,6 @@ p1 = numpy.poly1d(z1)
 
 print(p1)
 
-v, quad = integrate.quad(p1, 1, 3)
+v, quad = integrate.quad(p1, 17, 19)
 
-print(v)
+print(1950 * 2 - v)
