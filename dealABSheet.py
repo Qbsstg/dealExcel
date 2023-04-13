@@ -78,11 +78,11 @@ def fun_charge(loadtxt):
 
 
 def fun_y(loadtxt):
-    row = loadtxt.shape[0]
-
-    col = loadtxt.shape[1]
-
-    time = loadtxt[0][0]
+    # row = loadtxt.shape[0]
+    #
+    # col = loadtxt.shape[1]
+    #
+    # time = loadtxt[0][0]
 
     loadtxt_ = loadtxt[0:, 1:]
     loadtxt__ = loadtxt_[1::4]
@@ -97,12 +97,13 @@ def fun_y(loadtxt):
                 continue
             loadtxt___ = numpy.append(loadtxt___, loadtxt__[i][j])
 
-    x = numpy.arange(0, len(loadtxt___), 1)
+    return fun_f(loadtxt___)
 
+
+def fun_f(y):
+    x = numpy.arange(0, len(y), 1)
     warnings.simplefilter('ignore', numpy.RankWarning)
-    z1 = numpy.polyfit(x, loadtxt___, 20)
-    p1 = numpy.poly1d(z1)
-
+    p1 = numpy.poly1d(numpy.polyfit(x, y, 20))
     return p1
 
 
