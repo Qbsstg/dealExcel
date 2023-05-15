@@ -1,31 +1,11 @@
-# coding:utf-8
-import numpy
+import pandas
 
-# 读取桌面的csv文件
-filename = 'Data.csv'
+# 读取所有的sheet
+filename = 'train2.xlsx'
+excel = pandas.read_excel(filename, sheet_name=None, header=None)
 
-fn = open(filename, 'r', encoding='utf-8')
+# 取出A的数据
+a_to_numpy = excel['A'].to_numpy()
 
-# 将csv读取为二维数组
-loadtxt = numpy.loadtxt(fn, dtype=str, delimiter=',')
-
-# 数组的行数
-row = loadtxt.shape[0]
-
-# 数组的列数
-col = loadtxt.shape[1]
-
-row_ = row / 49
-
-
-# 按照每页49行，每行5列的格式，将数据写入到excel中
-reshape = loadtxt.reshape(int(row_), 49, 9)
-
-# 按照row_开始循环
-# for i in range(int(row_)):
-#     i_ = reshape[i]
-#     i__ = i_[0:]
-#     print(i__)  # 打印每页的数据
-
-
-print(reshape[4])
+# 定义一个常量
+c = 0
